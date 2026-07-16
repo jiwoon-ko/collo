@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useMemo, useState } from 'react'
 
 type View = 'home' | 'challenges' | 'arena' | 'rankings' | 'learn' | 'admin'
 type Challenge = { id: number; title: string; category: string; level: string; points: number; desc: string; progress: number; accent: string; icon: string }
@@ -34,36 +34,20 @@ function App() {
   const [completed, setCompleted] = useState<number[]>([])
   const [toast, setToast] = useState('')
   const notify = (message: string) => { setToast(message); window.setTimeout(() => setToast(''), 2800) }
-  const applyRoute = () => {
-    const [, route = 'home', id] = window.location.hash.split('/')
-    const nextView = ['home', 'challenges', 'arena', 'rankings', 'learn', 'admin'].includes(route) ? route as View : 'home'
-    if (nextView === 'arena') setSelected(challenges.find(c => c.id === Number(id)) ?? challenges[0])
-    setView(nextView)
-  }
-  useEffect(() => {
-    applyRoute()
-    window.addEventListener('hashchange', applyRoute)
-    return () => window.removeEventListener('hashchange', applyRoute)
-  }, [])
-  const navigate = (nextView: View, challenge?: Challenge) => {
-    const route = challenge ? `#arena/${challenge.id}` : `#${nextView}`
-    if (window.location.hash === route) { applyRoute(); return }
-    window.location.hash = route
-  }
-  const openChallenge = (challenge: Challenge) => navigate('arena', challenge)
+  const openChallenge = (challenge: Challenge) => { setSelected(challenge); setView('arena') }
   const nav = [{ id: 'home', label: 'Overview', icon: 'home' }, { id: 'challenges', label: 'Challenges', icon: 'grid' }, { id: 'rankings', label: 'Rankings', icon: 'trophy' }, { id: 'learn', label: 'Learning', icon: 'book' }, { id: 'admin', label: 'Control room', icon: 'shield' }] as {id: View; label: string; icon: string}[]
 
   return <div className="app-shell">
     <aside className="sidebar">
-      <button className="brand" onClick={() => navigate('home')}><span className="brand-mark"><span /></span><span>SENTINEL<em>ARENA</em></span></button>
+      <button className="brand" onClick={() => setView('home')}><span className="brand-mark"><span /></span><span>SENTINEL<em>ARENA</em></span></button>
       <div className="nav-label">WORKSPACE</div>
-      <nav>{nav.map(item => <button key={item.id} className={'nav-item ' + (view === item.id ? 'active' : '')} onClick={() => navigate(item.id)}><Icon name={item.icon}/><span>{item.label}</span>{item.id === 'challenges' && <b>4</b>}</button>)}</nav>
+      <nav>{nav.map(item => <button key={item.id} className={'nav-item ' + (view === item.id ? 'active' : '')} onClick={() => setView(item.id)}><Icon name={item.icon}/><span>{item.label}</span>{item.id === 'challenges' && <b>4</b>}</button>)}</nav>
       <div className="sidebar-bottom"><div className="streak-card"><span className="streak-icon">✦</span><div><strong>7 day streak</strong><small>Keep your signal strong.</small></div></div><button className="profile"><span className="avatar">J</span><span><strong>Jin Kim</strong><small>Rookie · Lv. 4</small></span><span className="dots">•••</span></button></div>
     </aside>
-    <main className="main"><header className="topbar"><div className="crumb"><span>Workspace</span><span>/</span><strong>{view === 'home' ? 'Overview' : view === 'arena' ? selected.title : nav.find(n => n.id === view)?.label}</strong></div><div className="top-actions"><button className="ghost-btn" onClick={() => notify('알림이 없습니다.')}>◔</button><button className="help" onClick={() => navigate('learn')}>?</button></div></header>
-      {view === 'home' && <Home setView={navigate} openChallenge={openChallenge} completed={completed}/>} 
+    <main className="main"><header className="topbar"><div className="crumb"><span>Workspace</span><span>/</span><strong>{view === 'home' ? 'Overview' : view === 'arena' ? selected.title : nav.find(n => n.id === view)?.label}</strong></div><div className="top-actions"><button className="ghost-btn" onClick={() => notify('알림이 없습니다.')}>◔</button><button className="help" onClick={() => setView('learn')}>?</button></div></header>
+      {view === 'home' && <Home setView={setView} openChallenge={openChallenge} completed={completed}/>} 
       {view === 'challenges' && <Challenges openChallenge={openChallenge} completed={completed}/>} 
-      {view === 'arena' && <Arena challenge={selected} completed={completed} setCompleted={setCompleted} notify={notify} onBack={() => navigate('challenges')}/>} 
+      {view === 'arena' && <Arena challenge={selected} completed={completed} setCompleted={setCompleted} notify={notify}/>} 
       {view === 'rankings' && <Rankings/>} {view === 'learn' && <Learning openChallenge={openChallenge}/>} {view === 'admin' && <Admin notify={notify}/>} 
     </main>
     {toast && <div className="toast"><Icon name="check" size={16}/>{toast}</div>}
@@ -86,9 +70,9 @@ function ChallengeCard({ challenge, done, onClick }: { challenge: Challenge; don
 
 function Challenges({ openChallenge, completed }: { openChallenge: (c: Challenge) => void; completed: number[] }) { const [filter, setFilter] = useState('All'); const filtered = filter === 'All' ? challenges : challenges.filter(c => c.category === filter); return <div className="page"><section className="page-title"><span className="eyebrow"><i /> PRACTICE LABS</span><h1>Choose your next signal</h1><p>모든 실습은 격리된 학습 시나리오에서 안전하게 진행됩니다.</p></section><div className="filter-row">{['All','XSS','SQLi','Web','API'].map(f => <button className={filter === f ? 'selected' : ''} key={f} onClick={() => setFilter(f)}>{f}</button>)}</div><div className="challenge-grid all-challenges">{filtered.map(c => <ChallengeCard key={c.id} challenge={c} done={completed.includes(c.id)} onClick={() => openChallenge(c)}/>)}</div></div> }
 
-function Arena({ challenge, completed, setCompleted, notify, onBack }: { challenge: Challenge; completed: number[]; setCompleted: React.Dispatch<React.SetStateAction<number[]>>; notify: (s: string) => void; onBack: () => void }) {
- const [tab, setTab] = useState<'brief'|'lab'|'guide'>('brief'); const [payload, setPayload] = useState('<img src=x onerror=alert(1)>'); const [logs, setLogs] = useState<string[]>(['Sandbox initialized', 'Policy: simulation-only environment']); const [flag, setFlag] = useState(''); const [coachOpen, setCoachOpen] = useState(true); const [coachInput, setCoachInput] = useState(''); const [messages, setMessages] = useState([{ role: 'coach', text: '좋아요. 먼저 입력값이 어디에서 DOM으로 다시 그려지는지 추적해 볼까요? 데이터의 “출처”와 “도착점”을 연결해 보세요.' }]); const [simulation, setSimulation] = useState<{ risk: 'low'|'high'; summary: string } | null>(null); const [running, setRunning] = useState(false);
- const run = () => { const isRisky = /<|onerror|script|javascript:/i.test(payload); setRunning(true); setSimulation(null); window.setTimeout(() => { setLogs(l => [...l, `Input received: ${payload.slice(0, 28)}…`, `Parser analysis: ${isRisky ? 'untrusted markup reaches an unsafe sink' : 'plain text reaches the output boundary'}`, 'Simulation complete · no external requests made']); setSimulation({ risk: isRisky ? 'high' : 'low', summary: isRisky ? '입력값이 HTML로 해석될 수 있는 경로를 감지했습니다.' : '활성 마크업 패턴이 감지되지 않았습니다.' }); setRunning(false); notify('시뮬레이션 분석 결과가 업데이트되었습니다.') }, 420) }
+function Arena({ challenge, completed, setCompleted, notify }: { challenge: Challenge; completed: number[]; setCompleted: React.Dispatch<React.SetStateAction<number[]>>; notify: (s: string) => void }) {
+ const [tab, setTab] = useState<'brief'|'lab'|'guide'>('brief'); const [payload, setPayload] = useState('<img src=x onerror=alert(1)>'); const [logs, setLogs] = useState<string[]>(['Sandbox initialized', 'Policy: simulation-only environment']); const [flag, setFlag] = useState(''); const [coachOpen, setCoachOpen] = useState(true); const [coachInput, setCoachInput] = useState(''); const [messages, setMessages] = useState([{ role: 'coach', text: '좋아요. 먼저 입력값이 어디에서 DOM으로 다시 그려지는지 추적해 볼까요? 데이터의 “출처”와 “도착점”을 연결해 보세요.' }]);
+ const run = () => { setLogs(l => [...l, `Input received: ${payload.slice(0, 28)}…`, 'Flow map updated: input → template → browser parser', 'Simulation complete · no external requests made']); notify('시뮬레이션 흐름이 업데이트되었습니다.') }
  const submit = () => { if (flag.trim().toLowerCase() === 'flag{echo_reflection_found}') { if (!completed.includes(challenge.id)) setCompleted(v => [...v, challenge.id]); notify(`정답입니다! +${challenge.points} SP를 획득했습니다.`) } else notify('아직 일치하지 않아요. 가이드의 흐름도를 다시 살펴보세요.') }
  const ask = () => { if (!coachInput.trim()) return; setMessages(m => [...m, {role:'you',text:coachInput}, {role:'coach',text:'좋은 질문이에요. 실행 결과보다 먼저, 사용자 입력이 인코딩 없이 렌더링 경계에 도달하는지 확인하세요. 이것이 이번 시나리오의 핵심 단서입니다.'}]); setCoachInput('') }
  return <div className="arena-page"><div className="arena-head"><button className="back" onClick={() => history.back()}>←</button><div><span className="eyebrow"><i /> {challenge.category} · {challenge.level.toUpperCase()}</span><h1>{challenge.title}</h1></div><span className="arena-points">+{challenge.points} SP</span></div><div className="arena-tabs">{([['brief','Mission brief'],['lab','Live lab'],['guide','Theory & guide']] as const).map(([id,label]) => <button className={tab === id ? 'active' : ''} key={id} onClick={() => setTab(id)}>{label}</button>)}</div>
@@ -97,7 +81,7 @@ function Arena({ challenge, completed, setCompleted, notify, onBack }: { challen
 }
 
 function MissionBrief({ challenge, onStart }: { challenge: Challenge; onStart: () => void }) { return <div className="mission"><div className="mission-glyph">{challenge.icon}</div><span className="tiny-label">MISSION 01</span><h2>사용자 입력의<br/><span>도착점을 찾으세요.</span></h2><p>검색 기능이 사용자의 문자열을 화면에 되돌려 줍니다. 이 흐름에서 신뢰 경계가 무너지는 지점을 관찰하고, 안전한 대안을 설명하세요.</p><div className="mission-list"><div><b>01</b><span>입력 데이터의 출처를 찾기</span></div><div><b>02</b><span>렌더링 API와 컨텍스트 확인하기</span></div><div><b>03</b><span>안전한 출력 처리 제안하기</span></div></div><button className="primary" onClick={onStart}>실습 환경 열기 <Icon name="arrow" size={16}/></button></div> }
-function FlowMap({ logs }: { logs: string[] }) { const hasRun = logs.some(log => log.startsWith('Parser analysis:')); const risky = logs.some(log => log.includes('unsafe sink')); return <div className={'flow ' + (hasRun ? 'flow-complete' : '')}><div className="flow-title"><span className="tiny-label">ATTACK / DEFENSE MAP</span><b>데이터 흐름 관찰</b>{hasRun && <span className={'analysis-badge ' + (risky ? 'danger' : 'safe')}>{risky ? 'Unsafe path detected' : 'Safe text path'}</span>}</div><div className="flow-nodes"><div className={hasRun ? 'active' : ''}><span>01</span><b>URL input</b><small>untrusted</small></div><i>→</i><div className={hasRun ? 'active' : ''}><span>02</span><b>Template</b><small>unsafe sink</small></div><i>→</i><div className={'risk ' + (hasRun && risky ? 'active' : '')}><span>03</span><b>DOM parser</b><small>{hasRun && risky ? 'risk confirmed' : 'risk detected'}</small></div><i>→</i><div className={'defense ' + (hasRun ? 'active' : '')}><span>04</span><b>textContent</b><small>defended</small></div></div>{hasRun && <div className={'simulation-result ' + (risky ? 'danger' : 'safe')}><b>{risky ? 'Risk signal: High' : 'Risk signal: Low'}</b><span>{risky ? 'The sandbox identified markup flowing toward an HTML parsing boundary. No code was executed.' : 'The sandbox treated this input as text. No code was executed.'}</span></div>}<div className="terminal-log">{logs.slice(-3).map((l,i)=><p key={i}><span>›</span>{l}</p>)}</div></div> }
+function FlowMap({ logs }: { logs: string[] }) { return <div className="flow"><div className="flow-title"><span className="tiny-label">ATTACK / DEFENSE MAP</span><b>데이터 흐름 관찰</b></div><div className="flow-nodes"><div><span>01</span><b>URL input</b><small>untrusted</small></div><i>→</i><div><span>02</span><b>Template</b><small>unsafe sink</small></div><i>→</i><div className="risk"><span>03</span><b>DOM parser</b><small>risk detected</small></div><i>→</i><div className="defense"><span>04</span><b>textContent</b><small>defended</small></div></div><div className="terminal-log">{logs.slice(-3).map((l,i)=><p key={i}><span>›</span>{l}</p>)}</div></div> }
 function Guide({ challenge, onTry }: { challenge: Challenge; onTry: () => void }) { return <div className="guide"><span className="tiny-label">GUIDED WALKTHROUGH</span><h2>문자열이 코드가 되는 순간</h2><p>이 시나리오의 핵심은 “입력이 위험한가”가 아니라, 그 입력이 어떤 API를 통해 브라우저에 전달되는가입니다.</p><div className="guide-cards"><article><b>1. Source</b><p>URL 파라미터는 사용자가 제어하는 데이터입니다. 신뢰하지 않는 출처로 분류하세요.</p></article><article><b>2. Sink</b><p><code>innerHTML</code>은 문자열을 HTML로 해석합니다. 텍스트 표시에 적합하지 않은 렌더링 경계입니다.</p></article><article><b>3. Defense</b><p><code>textContent</code>를 사용하거나, 컨텍스트에 맞는 인코딩과 검증을 적용하세요.</p></article></div><div className="solution-note"><Icon name="shield"/><span><b>관리자용 해답 요약</b><br/>입력값을 HTML 해석 API에 직접 넣지 않고, <code>textContent</code>로 출력한다. 플래그: <code>flag&#123;echo_reflection_found&#125;</code></span></div><button className="primary" onClick={onTry}>실습으로 확인하기 <Icon name="arrow" size={16}/></button></div> }
 
 function Rankings() { const ranks = [{n:'Mina Park',p:'2,480',c:'14',a:'MP'},{n:'Alex Chen',p:'2,210',c:'12',a:'AC'},{n:'Sora Lee',p:'1,960',c:'11',a:'SL'},{n:'Jin Kim',p:'840',c:'3',a:'JK'}]; return <div className="page"><section className="page-title"><span className="eyebrow"><i /> COMMUNITY SIGNAL</span><h1>Rankings</h1><p>매주 새로운 실습과 함께 신호를 쌓아 보세요.</p></section><div className="podium"><div className="podium-user second"><span>2</span><i>AC</i><b>Alex Chen</b><small>2,210 SP</small></div><div className="podium-user first"><span>1</span><i>MP</i><b>Mina Park</b><small>2,480 SP</small><em>✦</em></div><div className="podium-user third"><span>3</span><i>SL</i><b>Sora Lee</b><small>1,960 SP</small></div></div><div className="rank-table"><div className="rank-head"><span>RANK</span><span>OPERATOR</span><span>CHALLENGES</span><span>SIGNAL POINTS</span></div>{ranks.map((r,i)=><div className={'rank-row '+(r.n==='Jin Kim'?'me':'')} key={r.n}><strong>#{i+1}</strong><span className="rank-person"><i>{r.a}</i>{r.n}</span><span>{r.c}</span><b>{r.p} SP</b></div>)}</div></div> }
