@@ -1,1 +1,124 @@
-.flow-title{position:relative}.analysis-badge{display:inline-flex;align-items:center;margin:8px 0 0;padding:4px 7px;border-radius:4px;font:9px 'DM Mono';letter-spacing:.2px}.analysis-badge.danger{background:#fff0f1;color:#c15364}.analysis-badge.safe{background:#eaf8f4;color:#318d7c}.flow-nodes>div.active{border-color:#a9a0f3;background:#f5f4ff;box-shadow:0 5px 12px rgba(105,89,220,.10);animation:signal-in .35s ease both}.flow-nodes .risk.active{border-color:#edb8c0;background:#fff4f5}.flow-nodes .defense.active{border-color:#94d9cb;background:#effbf8}.simulation-result{display:flex;align-items:center;gap:9px;border-radius:5px;padding:9px 11px;margin:0 0 9px;font-size:10px;line-height:1.5}.simulation-result b{font:700 10px 'DM Mono';white-space:nowrap}.simulation-result.danger{background:#fff4f5;color:#a55362}.simulation-result.safe{background:#effaf7;color:#358a78}.simulation-result span{opacity:.9}@keyframes signal-in{from{opacity:.35;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.flow-title {
+  position: relative;
+}
+.analysis-badge {
+  display: inline-flex;
+  align-items: center;
+  margin: 8px 0 0;
+  padding: 4px 7px;
+  border-radius: 4px;
+  font: 9px "DM Mono";
+  letter-spacing: 0.2px;
+}
+.analysis-badge.danger {
+  background: #fff0f1;
+  color: #c15364;
+}
+.analysis-badge.safe {
+  background: #eaf8f4;
+  color: #318d7c;
+}
+.flow-nodes > div.active {
+  border-color: #a9a0f3;
+  background: #f5f4ff;
+  box-shadow: 0 5px 12px rgba(105, 89, 220, 0.1);
+  animation: signal-in 0.35s ease both;
+}
+.flow-nodes .risk.active {
+  border-color: #edb8c0;
+  background: #fff4f5;
+}
+.flow-nodes .defense.active {
+  border-color: #94d9cb;
+  background: #effbf8;
+}
+.simulation-result {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border-radius: 5px;
+  padding: 9px 11px;
+  margin: 0 0 9px;
+  font-size: 10px;
+  line-height: 1.5;
+}
+.simulation-result b {
+  font: 700 10px "DM Mono";
+  white-space: nowrap;
+}
+.simulation-result.danger {
+  background: #fff4f5;
+  color: #a55362;
+}
+.simulation-result.safe {
+  background: #effaf7;
+  color: #358a78;
+}
+.simulation-result span {
+  opacity: 0.9;
+}
+@keyframes signal-in {
+  from {
+    opacity: 0.35;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.lesson-panel {
+  max-width: 850px;
+  margin: 22px 0 0;
+  padding: 23px 25px;
+  background: #fff;
+  border: 1px solid #e5e5ed;
+  border-radius: 9px;
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: flex-end;
+  box-shadow: 0 8px 24px rgba(29, 31, 54, 0.04);
+}
+.lesson-panel h2 {
+  font: 700 20px "Space Grotesk";
+  margin: 7px 0;
+}
+.lesson-panel p {
+  max-width: 600px;
+  color: #696d7d;
+  font-size: 12px;
+  line-height: 1.8;
+  margin: 0;
+}
+.lesson-takeaway {
+  margin-top: 15px;
+  padding: 10px 11px;
+  border-radius: 5px;
+  background: #eff9f6;
+  color: #43877a;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.lesson-actions {
+  display: flex;
+  flex: none;
+  gap: 10px;
+  align-items: center;
+}
+.lesson-actions .primary {
+  white-space: nowrap;
+}
+@media (max-width: 620px) {
+  .lesson-panel {
+    display: block;
+    padding: 18px;
+  }
+  .lesson-actions {
+    margin-top: 17px;
+    justify-content: flex-end;
+  }
+}
+.run-btn:disabled{opacity:.72;cursor:wait}.flag-found{margin-top:12px;padding:10px;border:1px solid #a8dfd3;background:#effbf8;border-radius:6px;display:grid;gap:6px}.flag-found span{color:#438f80;font:9px 'DM Mono';letter-spacing:.8px}.flag-found code{color:#316c61;font:10px 'DM Mono';word-break:break-all}.flag-found button{justify-self:start;border:0;border-radius:4px;background:#5eaf9e;color:#fff;padding:5px 7px;font:700 9px Manrope;cursor:pointer}.evidence-card{display:flex;gap:8px;align-items:flex-start;border:1px solid #a8dfd3;background:#f0fbf8;border-radius:5px;padding:9px 10px;margin:0 0 9px;color:#438879}.evidence-card svg{flex:none;margin-top:1px}.evidence-card b,.evidence-card small{display:block}.evidence-card b{font:700 10px 'DM Mono'}.evidence-card small{font-size:9px;line-height:1.55;margin-top:2px}
