@@ -148,7 +148,7 @@ function App() {
             <span />
           </span>
           <span>
-            GRAY<em>HACKS</em>
+            SENTINEL<em>ARENA</em>
           </span>
         </button>
         <div className="nav-label">WORKSPACE</div>
@@ -660,7 +660,7 @@ function Arena({
                 <Icon name="spark" size={16} />
               </span>
               <span>
-                <b>Gray Coach</b>
+                <b>Sentinel Coach</b>
                 <small>힌트 기반 안내</small>
               </span>
               <span>{coachOpen ? "−" : "+"}</span>
