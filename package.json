@@ -10,14 +10,13 @@
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
-    "react": "latest",
-    "react-dom": "latest",
+    "vite": "latest",
     "typescript": "latest",
-    "vite": "latest"
+    "react": "latest",
+    "react-dom": "latest"
   },
   "devDependencies": {
     "@types/react": "latest",
-    "@types/react-dom": "latest",
-    "prettier": "^3.9.5"
+    "@types/react-dom": "latest"
   }
 }
