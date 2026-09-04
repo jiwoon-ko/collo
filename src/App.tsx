@@ -60,6 +60,7 @@ const authApi = {
 
 export type ViewState = 
   | 'landing' 
+  | 'beginner_basics'
   | 'tutorial_intro' 
   | 'main' 
   | 'wargames' 
@@ -3017,6 +3018,7 @@ export default function App() {
   const [currentView, setCurrentView] = useState<ViewState>(() => {
     try { return localStorage.getItem('aegis_token') ? 'landing' : 'login'; } catch { return 'login'; }
   });
+  const [beginnerTopic, setBeginnerTopic] = useState<'web' | 'tools' | 'code' | 'practice'>('web');
   const [username, setUsername] = useState<string>('Guest Operator');
 
   const [authError, setAuthError] = useState<string>('');
@@ -3231,7 +3233,7 @@ export default function App() {
 
   // Access gate: only landing/login/tutorial screens are reachable while logged out
   useEffect(() => {
-    const publicViews: ViewState[] = ['landing', 'login', 'tutorial_intro'];
+    const publicViews: ViewState[] = ['landing', 'login', 'beginner_basics', 'tutorial_intro'];
     if (!isLoggedIn && !publicViews.includes(currentView)) {
       setCurrentView('login');
     }
@@ -3555,13 +3557,17 @@ export default function App() {
                       (normalize(input) === normalize(expected));
 
       if (isMatch) {
+        const isLevelOne = levelTierOf(currentProblem) === 1;
         setTerminalLogs(prev => [
           ...prev,
-          { type: 'success', text: `[SUCCESS] 축하합니다! 대상 프로세스 취약점 검증 및 통과 성공!` },
-          { type: 'success', text: `FLAG: ${currentProblem.flag}` },
-          { type: 'info', text: `👉 위 FLAG를 아래 'FLAG:' 입력창에 그대로 복사(또는 입력)한 뒤 [SUBMIT]을 누르면 미션 완료!` }
+          { type: 'success', text: isLevelOne ? `[정답입니다!] 입력한 값이 문제의 조건과 정확히 일치합니다. 잠시 후 완료 화면으로 이동합니다.` : `[SUCCESS] 축하합니다! 대상 프로세스 취약점 검증 및 통과 성공!` },
+          ...(isLevelOne ? [{ type: 'info' as const, text: `💡 방금 입력이 왜 동작했는지는 미션 브리핑의 상황 설명과 코드를 다시 보면 확인할 수 있어요.` }] : [
+            { type: 'success' as const, text: `FLAG: ${currentProblem.flag}` },
+            { type: 'info' as const, text: `👉 위 FLAG를 아래 'FLAG:' 입력창에 그대로 복사(또는 입력)한 뒤 [SUBMIT]을 누르면 미션 완료!` }
+          ])
         ]);
         setIsSuccess(true);
+        if (isLevelOne) setTimeout(() => submitFlag(true), 5500);
       } else {
         const isBeginnerLevel = currentProblem.level === 'Tutorial' || currentProblem.level === 'Easy' || levelTierOf(currentProblem) === 1;
         setTerminalLogs(prev => [
@@ -3581,13 +3587,13 @@ export default function App() {
   };
 
   // Submit Flag Engine
-  const submitFlag = () => {
-    if (!flagInput.trim()) {
+  const submitFlag = (directComplete = false) => {
+    if (!directComplete && !flagInput.trim()) {
       alert('FLAG를 입력해주세요.');
       return;
     }
 
-    if (flagInput.trim() === currentProblem.flag) {
+    if (directComplete || flagInput.trim() === currentProblem.flag) {
       const isAlreadySolved = solvedProblemIds.includes(currentProblem.id);
       // 이미 클리어한 문제는 재풀이당 20% XP를 최대 3번까지만 지급 (그 이후로는 0) — 무한 파밍 방지
       const priorReplays = replayCounts[currentProblem.id] || 0;
@@ -3880,6 +3886,7 @@ export default function App() {
         <span onClick={() => setCurrentView('rankings')} style={navItemStyle(currentView === 'rankings')}>RANKINGS</span>
         <span onClick={() => setCurrentView('titles')} style={navItemStyle(currentView === 'titles')}>칭호</span>
         <span onClick={() => setCurrentView('guide')} style={navItemStyle(currentView === 'guide')}>📄 공략집</span>
+        <span onClick={() => setCurrentView('beginner_basics')} style={{ cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, background: 'rgba(56,189,248,0.14)', border: '1px solid #38bdf8', color: '#7dd3fc', padding: '5px 12px', fontWeight: 'bold' }}>🌱 왕초보 시작</span>
         <span onClick={() => setCurrentView('tutorial_intro')} style={{ cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, background: 'rgba(16,185,129,0.15)', border: '1px solid #10b981', color: '#10b981', padding: '5px 12px', fontWeight: 'bold' }}>🎓 튜토리얼 ★</span>
       </div>
 
@@ -3962,11 +3969,111 @@ export default function App() {
                   <button style={{ background: '#10b981', color: '#000', border: 'none', padding: '8px 16px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer' }}>시작 →</button>
                 </div>
 
+                <button onClick={() => setCurrentView('beginner_basics')} style={{ marginTop: '-18px', marginBottom: '28px', background: 'rgba(56,189,248,0.08)', border: '1px solid rgba(56,189,248,0.55)', color: '#bae6fd', padding: '10px 18px', cursor: 'pointer', fontWeight: 800 }}>
+                  🌱 문제 풀기 전, 웹 기초부터 가볍게 보기
+                </button>
+
                 <div className="hero-stagger hero-stagger-6" style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', justifyContent: 'center' }}>
                   <button onClick={() => { setWargameStage('hub'); setCurrentView(isLoggedIn ? 'wargames' : 'login'); }} className="cyber-btn-cyan" style={{ padding: '14px 40px', fontSize: '15px', fontWeight: 'bold' }}>🎮 GAME</button>
                   <button onClick={() => setCurrentView(isLoggedIn ? 'main' : 'login')} className="cyber-btn-purple" style={{ padding: '14px 40px', fontSize: '15px', fontWeight: 'bold' }}>🏠 HOME</button>
                 </div>
               </div>
+            </div>
+          )}
+
+          {currentView === 'beginner_basics' && (
+            <div style={{ width: '90%', maxWidth: '980px', margin: '30px auto', display: 'flex', flexDirection: 'column', gap: '18px', flex: 1 }}>
+              <div className="cyber-card-main" style={{ padding: '30px', borderLeft: '5px solid #38bdf8' }}>
+                <div style={{ color: '#7dd3fc', fontSize: '12px', fontWeight: 900, letterSpacing: '1.5px' }}>NO EXPERIENCE NEEDED</div>
+                <h2 style={{ margin: '6px 0 10px', color: '#e0f2fe' }}>🌱 왕초보 시작</h2>
+                <p style={{ margin: 0, color: '#cbd5e1', lineHeight: 1.7 }}>보안 문제를 풀기 전에 웹이 어떻게 보이고 움직이는지 먼저 알아봐요. 외울 내용은 없습니다.</p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {([
+                  ['web', '🌐 웹은 어떻게 열릴까?'],
+                  ['practice', '🔎 문제 읽는 법'],
+                ] as const).map(([id, label]) => (
+                  <button key={id} onClick={() => setBeginnerTopic(id)} style={{ cursor: 'pointer', padding: '10px 14px', border: `1px solid ${beginnerTopic === id ? '#38bdf8' : '#475569'}`, background: beginnerTopic === id ? 'rgba(56,189,248,0.15)' : 'rgba(15,23,42,0.7)', color: beginnerTopic === id ? '#e0f2fe' : '#94a3b8', fontWeight: 800 }}>{label}</button>
+                ))}
+              </div>
+
+              {beginnerTopic === 'web' && <div className="cyber-card-main" style={{ padding: '28px' }}>
+                <h3 style={{ marginTop: 0, color: '#67e8f9' }}>주소를 입력하면 무슨 일이 일어날까요?</h3>
+                <p style={{ color: '#cbd5e1', lineHeight: 1.7 }}>브라우저는 웹사이트의 주소를 보고 서버에 “이 페이지를 보여 주세요”라고 요청합니다. 서버는 HTML, CSS, JavaScript 파일을 보내고, 브라우저가 이를 조립해 지금 보는 화면을 만듭니다.</p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '12px', marginTop: '20px' }}>
+                  {[['1', '브라우저', '주소를 열고 요청을 보냄'], ['2', '서버', '필요한 파일을 찾아 응답'], ['3', '화면', '파일을 조립해 페이지를 그림']].map(([n, title, text]) => <div key={n} style={{ padding: '16px', border: '1px solid rgba(56,189,248,0.35)', background: 'rgba(14,116,144,0.08)' }}><div style={{ color: '#38bdf8', fontWeight: 900 }}>0{n}. {title}</div><div style={{ color: '#cbd5e1', fontSize: '13px', marginTop: '8px', lineHeight: 1.55 }}>{text}</div></div>)}
+                </div>
+                <div style={{ marginTop: '20px', padding: '18px', borderLeft: '4px solid #facc15', background: 'rgba(250,204,21,0.06)' }}>
+                  <b style={{ color: '#fde68a' }}>이게 첫 문제와 어떻게 연결되나요?</b>
+                  <p style={{ color: '#e2e8f0', lineHeight: 1.7, margin: '8px 0' }}>웹사이트는 사용자가 입력한 값을 서버로 보냅니다. 서버가 그 값을 코드에 그대로 이어 붙이면, 원래는 “이름”이어야 할 입력이 코드의 일부처럼 작동할 수 있어요.</p>
+                  <div className="code-snippet">입력칸의 값 → 서버 코드의 <span style={{ color: '#facc15' }}>빈 자리</span> → 화면 결과</div>
+                  <p style={{ color: '#cbd5e1', lineHeight: 1.65, margin: '10px 0 0', fontSize: '13px' }}>튜토리얼에서는 이 연결을 직접 눈으로 확인합니다. 중요한 건 어려운 명령을 외우는 것이 아니라, <b>“내가 쓴 글자가 코드의 어느 자리에 들어갈까?”</b>를 보는 거예요.</p>
+                </div>
+                <div style={{ marginTop: '18px', padding: '18px', border: '1px solid rgba(168,85,247,0.4)', background: 'rgba(88,28,135,0.08)' }}>
+                  <h4 style={{ color: '#d8b4fe', margin: '0 0 10px' }}>서버가 데이터를 찾을 때 쓰는 SQL 문장</h4>
+                  <p style={{ color: '#e2e8f0', lineHeight: 1.7, margin: '0 0 10px' }}>SQL은 서버가 데이터베이스에 “어떤 정보를 찾아 줘”라고 묻는 언어예요. 엑셀 표에서 조건에 맞는 행을 찾는 것과 비슷합니다.</p>
+                  <div className="code-snippet">SELECT * FROM users WHERE id='admin'</div>
+                  <ul style={{ color: '#cbd5e1', lineHeight: 1.8, paddingLeft: '20px', marginBottom: 0 }}>
+                    <li><code>SELECT</code>: “보여 줘”라는 뜻입니다.</li>
+                    <li><code>*</code>: 열을 전부 보여 달라는 뜻입니다.</li>
+                    <li><code>FROM users</code>: <code>users</code>라는 회원 목록에서 찾으라는 뜻입니다.</li>
+                    <li><code>WHERE id='admin'</code>: 그중 아이디가 admin인 행만 고르라는 조건입니다. 따옴표는 admin이 숫자가 아니라 글자라는 표시예요.</li>
+                  </ul>
+                </div>
+              </div>}
+
+              {beginnerTopic === 'tools' && <div className="cyber-card-main" style={{ padding: '28px' }}>
+                <h3 style={{ marginTop: 0, color: '#67e8f9' }}>개발자 도구는 웹페이지를 들여다보는 돋보기예요</h3>
+                <p style={{ color: '#cbd5e1', lineHeight: 1.7 }}>크롬·엣지에서 <code>F12</code> 또는 <code>Ctrl + Shift + I</code>를 누르면 열립니다. 처음에는 아래 두 탭만 보면 충분해요.</p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px' }}>
+                  <div style={{ padding: '16px', border: '1px solid rgba(56,189,248,0.35)' }}><b style={{ color: '#38bdf8' }}>Elements</b><p style={{ color: '#cbd5e1', fontSize: '13px', lineHeight: 1.6 }}>화면의 글·버튼이 어떤 HTML로 만들어졌는지 봅니다. 마우스 선택 아이콘을 누른 뒤 페이지 요소를 클릭해 보세요.</p></div>
+                  <div style={{ padding: '16px', border: '1px solid rgba(56,189,248,0.35)' }}><b style={{ color: '#38bdf8' }}>Console</b><p style={{ color: '#cbd5e1', fontSize: '13px', lineHeight: 1.6 }}>브라우저가 알려 주는 메시지 창입니다. 오류가 생기면 빨간 글씨가 이곳에 나타납니다.</p></div>
+                </div>
+                <p style={{ color: '#94a3b8', fontSize: '13px', lineHeight: 1.65, marginBottom: 0 }}>보안 문제에서 “입력값이 화면에 그대로 출력된다”는 말이 나오면 Elements를 떠올리세요. 태그가 글자로 보이는지, 진짜 화면 요소로 바뀌는지를 확인하는 곳입니다.</p>
+              </div>}
+
+              {beginnerTopic === 'code' && <div className="cyber-card-main" style={{ padding: '28px' }}>
+                <h3 style={{ marginTop: 0, color: '#67e8f9' }}>웹페이지는 세 가지 역할이 합쳐져 보여요</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
+                  {[['HTML', '뼈대', '<button>로그인</button>', '#fb923c'], ['CSS', '꾸미기', 'button { color: skyblue; }', '#a78bfa'], ['JavaScript', '움직임', 'button.onclick = openLogin;', '#34d399']].map(([name, role, sample, color]) => <div key={name} style={{ padding: '16px', border: `1px solid ${color}66` }}><b style={{ color }}>{name} — {role}</b><p style={{ color: '#cbd5e1', fontSize: '13px' }}>{name === 'HTML' ? '글과 버튼처럼 화면에 있는 요소를 만듭니다.' : name === 'CSS' ? '색, 크기, 위치처럼 보이는 모습을 정합니다.' : '클릭했을 때처럼 화면의 행동을 정합니다.'}</p><code style={{ color: '#e2e8f0', fontSize: '12px' }}>{sample}</code></div>)}
+                </div>
+                <p style={{ color: '#94a3b8', fontSize: '13px', marginBottom: 0 }}>이제 튜토리얼에서 코드가 나오면 “뼈대·꾸미기·행동 중 무엇일까?”만 떠올려도 충분합니다.</p>
+              </div>}
+
+              {beginnerTopic === 'practice' && <div className="cyber-card-main" style={{ padding: '28px' }}>
+                <h3 style={{ marginTop: 0, color: '#67e8f9' }}>튜토리얼을 열면 이 세 가지만 찾아보세요</h3>
+                <p style={{ color: '#cbd5e1', lineHeight: 1.7 }}>처음부터 코드를 전부 읽을 필요는 없습니다. 문제 화면에서 아래 순서대로 한 줄씩 연결하면 됩니다.</p>
+                <div style={{ display: 'grid', gap: '14px' }}>
+                  <div style={{ padding: '17px', border: '1px solid rgba(56,189,248,0.4)', background: 'rgba(14,116,144,0.07)' }}>
+                    <b style={{ color: '#7dd3fc' }}>1. 어디에 입력하나요?</b>
+                    <p style={{ color: '#cbd5e1', lineHeight: 1.65, marginBottom: 0 }}>로그인 아이디, 검색어, 게시글처럼 사용자가 직접 쓰는 칸을 찾습니다. 그 값은 보통 서버 코드에서 <code>id</code>, <code>name</code>, <code>query</code> 같은 변수 이름으로 받아옵니다.</p>
+                  </div>
+                  <div style={{ padding: '17px', border: '1px solid rgba(56,189,248,0.4)', background: 'rgba(14,116,144,0.07)' }}>
+                    <b style={{ color: '#7dd3fc' }}>2. 그 값이 어디에 들어가나요?</b>
+                    <p style={{ color: '#cbd5e1', lineHeight: 1.65, marginBottom: '8px' }}>코드에서 입력 변수가 들어간 줄을 찾습니다. 아래처럼 따옴표 사이에 이어 붙으면, 입력이 단순한 이름이 아니라 문장의 일부가 될 수 있습니다.</p>
+                    <div className="code-snippet">SELECT * FROM users WHERE id='<span style={{ color: '#facc15' }}>입력값</span>'</div>
+                    <p style={{ color: '#cbd5e1', lineHeight: 1.65, margin: '10px 0 0', fontSize: '13px' }}>예를 들어 <code>jnuh</code>라는 아이디를 가진 사람을 찾는 구문은 <code>SELECT * FROM users WHERE id='jnuh'</code>입니다. <code>users</code> 목록에서 <code>id</code>가 jnuh인 사람을 찾아 달라는 뜻이에요.</p>
+                  </div>
+                  <div style={{ padding: '17px', border: '1px solid rgba(56,189,248,0.4)', background: 'rgba(14,116,144,0.07)' }}>
+                    <b style={{ color: '#7dd3fc' }}>3. 결과가 어디에 보이나요?</b>
+                    <p style={{ color: '#cbd5e1', lineHeight: 1.65, marginBottom: 0 }}>서버가 만든 결과는 로그인 성공 화면, 검색 결과, 경고창처럼 다시 브라우저에 보입니다. XSS 문제는 이 마지막 단계에서 입력한 글이 ‘글’이 아니라 ‘화면 요소나 코드’가 되는지 살펴보는 문제예요.</p>
+                  </div>
+                </div>
+                <div style={{ marginTop: '18px', padding: '16px', borderLeft: '4px solid #34d399', background: 'rgba(16,185,129,0.08)', color: '#d1fae5', lineHeight: 1.7 }}>
+                  <b>문제를 풀 때의 작은 습관:</b> 설명을 읽고 바로 정답을 보지 말고, 먼저 “입력칸은 어디지?”, “코드에서 이 값은 어디에 붙지?”를 한 번 찾아보세요. 그 다음 힌트로 확인하면 훨씬 덜 외우게 됩니다.
+                </div>
+                <div style={{ marginTop: '18px', padding: '18px', border: '1px solid rgba(250,204,21,0.45)', background: 'rgba(250,204,21,0.06)' }}>
+                  <h4 style={{ color: '#fde68a', margin: '0 0 10px' }}>첫 문제: 왜 <code>admin'--</code>인가요?</h4>
+                  <p style={{ color: '#e2e8f0', lineHeight: 1.7 }}>원래 서버는 입력값을 아래 빈 자리에 붙여 SQL 문장을 만들어요. 아이디에는 글자만 올 것이라고 믿고 만든 코드입니다.</p>
+                  <div className="code-snippet">SELECT * FROM users WHERE id='<span style={{ color: '#facc15' }}>입력값</span>' AND pw='비밀번호'</div>
+                  <p style={{ color: '#e2e8f0', lineHeight: 1.7 }}>여기에 <code>admin'--</code>을 넣으면 첫 번째 <code>'</code>가 <code>admin</code>이라는 글자를 감싼 따옴표를 닫습니다. 그 뒤의 <code>--</code>는 SQL에서 “여기부터 뒤는 메모이니 실행하지 마”라는 주석 표시예요.</p>
+                  <div className="code-snippet">SELECT * FROM users WHERE id='admin'<span style={{ color: '#94a3b8' }}> -- ' AND pw='비밀번호' (주석이라 무시)</span></div>
+                  <p style={{ color: '#d1fae5', lineHeight: 1.7, marginBottom: 0 }}>그래서 비밀번호를 확인하는 뒷부분이 실행되지 않습니다. 이 실습의 핵심은 <b>특수한 글자(-)가 입력값으로만 남지 않고 SQL 문장의 문법이 되어 버렸다</b>는 점입니다. 하이픈 두 개(<code>--</code>)가 주석을 시작하는 핵심 역할을 합니다.</p>
+                </div>
+              </div>}
+
+              <button onClick={() => setCurrentView('tutorial_intro')} className="cyber-btn-cyan" style={{ alignSelf: 'flex-start', padding: '13px 22px', fontWeight: 900 }}>이제 튜토리얼 시작하기 →</button>
             </div>
           )}
 
@@ -4569,8 +4676,8 @@ export default function App() {
                     </div>
                   )}
 
-                  {/* Flag Submission Row */}
-                  <div style={{ padding: '10px 14px', display: 'flex', gap: '10px', background: '#07111f', borderTop: '1px solid rgba(0,242,254,0.2)' }}>
+                  {/* Level 1은 정답 입력만으로 완료한다. */}
+                  {levelTierOf(currentProblem) !== 1 && <div style={{ padding: '10px 14px', display: 'flex', gap: '10px', background: '#07111f', borderTop: '1px solid rgba(0,242,254,0.2)' }}>
                     <label style={{ color: '#38bdf8', fontSize: '12px', fontWeight: 'bold', alignSelf: 'center' }}>FLAG:</label>
                     <input
                       type="text"
@@ -4582,7 +4689,7 @@ export default function App() {
                     <button onClick={submitFlag} className="cyber-btn-cyan" style={{ padding: '8px 20px', fontSize: '13px' }}>
                       SUBMIT
                     </button>
-                  </div>
+                  </div>}
                 </div>
 
               </div>
