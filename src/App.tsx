@@ -4686,7 +4686,7 @@ export default function App() {
                       placeholder="FLAG{...}"
                       style={{ flex: 1, padding: '8px 12px', background: '#020407', border: '1px solid rgba(0,242,254,0.22)', color: '#e2e8f0', outline: 'none', fontFamily: 'Consolas, monospace', fontSize: '13px' }}
                     />
-                    <button onClick={submitFlag} className="cyber-btn-cyan" style={{ padding: '8px 20px', fontSize: '13px' }}>
+                    <button onClick={() => submitFlag()} className="cyber-btn-cyan" style={{ padding: '8px 20px', fontSize: '13px' }}>
                       SUBMIT
                     </button>
                   </div>}
